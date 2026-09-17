@@ -1,4 +1,4 @@
-name: LandVista Pipeline
+name: Deploy Landvista Website
 
 on:
   push:
@@ -6,15 +6,28 @@ on:
       - master
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: List Project Files
-        run: ls -la
+      - name: Deploy Website to AWS
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_KEY }}
+          source: "index.html,style.css,script.js"
+          target: "/var/www/html"
 
-      - name: Pipeline Success
-        run: echo "Website pipeline executed successfully!"
+      - name: Restart Nginx
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            sudo systemctl restart nginx
+            echo "Website deployed successfully!"
