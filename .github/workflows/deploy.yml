@@ -1,4 +1,4 @@
-name: Deploy Landvista Website
+name: Deploy Website to AWS
 
 on:
   push:
@@ -9,24 +9,31 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    
-      steps:
-  - name: Deploy Website to AWS
-    uses: appleboy/scp-action@v1
-    with:
-      host: ${{ secrets.EC2_HOST }}
-      username: ${{ secrets.EC2_USERNAME }}
-      key: ${{ secrets.EC2_PRIVATE_KEY }}
-      port: 22
-      source: "index.html,style.css,script.js"
-      target: "/var/www/html"
+    steps:
 
-  - name: Restart Nginx
-    uses: appleboy/ssh-action@v1.2.0
-    with:
-      host: ${{ secrets.EC2_HOST }}
-      username: ${{ secrets.EC2_USERNAME }}
-      key: ${{ secrets.EC2_PRIVATE_KEY }}
-      port: 22
-      script: |
-        sudo systemctl restart nginx
+      # 1. Get the code from GitHub
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Copy website files to EC2
+      - name: Deploy Website to AWS
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          port: 22
+          source: "index.html,style.css,script.js"
+          target: "/var/www/html"
+
+      # 3. Restart Nginx
+      - name: Restart Nginx
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          port: 22
+          script: |
+            sudo systemctl restart nginx
+            sudo systemctl status nginx --no-pager
