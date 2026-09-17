@@ -9,25 +9,24 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    
+      steps:
+  - name: Deploy Website to AWS
+    uses: appleboy/scp-action@v1
+    with:
+      host: ${{ secrets.EC2_HOST }}
+      username: ${{ secrets.EC2_USERNAME }}
+      key: ${{ secrets.EC2_PRIVATE_KEY }}
+      port: 22
+      source: "index.html,style.css,script.js"
+      target: "/var/www/html"
 
-      - name: Deploy Website to AWS
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          source: "index.html,style.css,script.js"
-          target: "/var/www/html"
-
-      - name: Restart Nginx
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          script: |
-            sudo systemctl restart nginx
-            echo "Website deployed successfully!"
+  - name: Restart Nginx
+    uses: appleboy/ssh-action@v1.2.0
+    with:
+      host: ${{ secrets.EC2_HOST }}
+      username: ${{ secrets.EC2_USERNAME }}
+      key: ${{ secrets.EC2_PRIVATE_KEY }}
+      port: 22
+      script: |
+        sudo systemctl restart nginx
