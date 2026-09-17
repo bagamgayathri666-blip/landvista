@@ -11,12 +11,12 @@ jobs:
 
     steps:
 
-      # 1. Get the code from GitHub
+      # 1. Checkout the GitHub repository
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Copy website files to EC2
-      - name: Deploy Website to AWS
+      # 2. Copy website files to EC2 user's home directory
+      - name: Copy Website to EC2
         uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -24,9 +24,22 @@ jobs:
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           port: 22
           source: "index.html,style.css,script.js"
-          target: "/var/www/html"
+          target: "/home/ec2-user/website"
 
-      # 3. Restart Nginx
+      # 3. Move files into Nginx directory using sudo
+      - name: Deploy Files to Nginx
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          port: 22
+          script: |
+            sudo mkdir -p /var/www/html
+            sudo cp -r /home/ec2-user/website/* /var/www/html/
+            sudo chmod -R 755 /var/www/html
+
+      # 4. Restart Nginx
       - name: Restart Nginx
         uses: appleboy/ssh-action@v1.2.0
         with:
